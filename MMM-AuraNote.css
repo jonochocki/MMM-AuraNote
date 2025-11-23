@@ -1,0 +1,381 @@
+/* MMM-AuraNote Styles */
+
+.MMM-AuraNote {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* CSS Variables */
+.MMM-AuraNote {
+    --glow-height: 50vh;
+    --color-orange: #FF9500;
+    --color-yellow: #FFCC00;
+    --color-red: #FF3B30;
+    --color-pink: #FF2D55;
+    --color-blue: #007AFF;
+    --color-purple: #AF52DE;
+}
+
+/* Glow Background */
+.MMM-AuraNote .glow-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--glow-height);
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    filter: blur(120px);
+    opacity: 0.9;
+    transform: translateZ(0);
+    z-index: 0;
+}
+
+.MMM-AuraNote .glow-blob {
+    position: absolute;
+    border-radius: 50%;
+    mix-blend-mode: screen;
+    bottom: -40%;
+    width: 80vw;
+    height: 80vh;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    opacity: 0.7;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Blob Animations */
+.MMM-AuraNote .blob-1 {
+    background: radial-gradient(circle, var(--color-orange) 0%, transparent 60%);
+    margin-left: -40vw;
+    animation: auraBlob1 12s infinite alternate;
+}
+
+.MMM-AuraNote .blob-2 {
+    background: radial-gradient(circle, var(--color-yellow) 0%, transparent 60%);
+    margin-left: -25vw;
+    animation: auraBlob2 15s infinite alternate-reverse;
+    animation-delay: -2s;
+}
+
+.MMM-AuraNote .blob-3 {
+    background: radial-gradient(circle, var(--color-red) 0%, transparent 60%);
+    margin-left: -10vw;
+    animation: auraBlob3 13s infinite alternate;
+    animation-delay: -5s;
+}
+
+.MMM-AuraNote .blob-4 {
+    background: radial-gradient(circle, var(--color-pink) 0%, transparent 60%);
+    margin-left: 5vw;
+    animation: auraBlob4 14s infinite alternate-reverse;
+    animation-delay: -1s;
+}
+
+.MMM-AuraNote .blob-5 {
+    background: radial-gradient(circle, var(--color-blue) 0%, transparent 60%);
+    margin-left: 20vw;
+    animation: auraBlob5 16s infinite alternate;
+    animation-delay: -7s;
+}
+
+.MMM-AuraNote .blob-6 {
+    background: radial-gradient(circle, var(--color-purple) 0%, transparent 60%);
+    margin-left: 35vw;
+    animation: auraBlob6 11s infinite alternate-reverse;
+    animation-delay: -3s;
+}
+
+.MMM-AuraNote .blob-7 {
+    background: radial-gradient(circle, var(--color-blue) 0%, transparent 60%);
+    margin-left: 0;
+    bottom: -50%;
+    width: 100vw;
+    animation: auraBlob7 18s infinite alternate;
+}
+
+.MMM-AuraNote .glow-overlay {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.1), transparent);
+    z-index: 10;
+}
+
+/* Message Container */
+.MMM-AuraNote .message-container {
+    position: fixed;
+    bottom: 20%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    z-index: 50;
+    pointer-events: none;
+    overflow: visible;
+}
+
+/* Message Bubbles */
+.MMM-AuraNote .message-bubble {
+    position: absolute;
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    border-radius: 24px;
+    padding: 16px 24px;
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    will-change: transform;
+    max-width: 33vw;
+    white-space: normal;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, border-color 0.3s;
+}
+
+.MMM-AuraNote .message-bubble.dark-mode {
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        0 0 20px rgba(255, 255, 255, 0.25),
+        0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.MMM-AuraNote .rich-bubble {
+    text-align: left;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.MMM-AuraNote .message-bubble img {
+    border-radius: 16px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.MMM-AuraNote .message-bubble h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.MMM-AuraNote .message-bubble p {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    line-height: 1.4;
+    opacity: 0.9;
+}
+
+/* CTA Button */
+.MMM-AuraNote .bubble-cta {
+    margin-top: auto;
+    padding: 4px 12px;
+    background: white;
+    border: none;
+    border-radius: 12px;
+    color: black;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.3s, transform 0.1s;
+    display: inline-block;
+    align-self: flex-start;
+}
+
+.MMM-AuraNote .bubble-cta:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+.MMM-AuraNote .bubble-cta:active {
+    transform: scale(0.98);
+}
+
+/* Critical Alert Styling */
+@keyframes auraPulseGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 40px rgba(255, 255, 255, 0.9),
+            0 0 70px rgba(255, 255, 255, 0.7),
+            0 0 100px rgba(255, 255, 255, 0.5),
+            0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    50% {
+        box-shadow:
+            0 0 60px rgba(255, 255, 255, 1),
+            0 0 100px rgba(255, 255, 255, 0.9),
+            0 0 140px rgba(255, 255, 255, 0.7),
+            0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+}
+
+.MMM-AuraNote .message-bubble.critical-bubble {
+    border: 2px solid rgba(255, 255, 255, 1);
+    background: rgba(255, 255, 255, 0.25);
+    animation: auraPulseGlow 2s ease-in-out infinite;
+}
+
+.MMM-AuraNote .message-bubble.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.MMM-AuraNote .message-bubble.hide {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+}
+
+/* Timer SVG */
+.MMM-AuraNote .timer-svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.MMM-AuraNote .timer-border {
+    fill: none;
+    stroke: rgba(255, 255, 255, 1);
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+
+/* Blob Animation Keyframes */
+@keyframes auraBlob1 {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(-40%, -10%) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-60%, 5%) scale(0.9);
+    }
+
+    100% {
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+@keyframes auraBlob2 {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(-45%, -15%) scale(1.2);
+    }
+
+    100% {
+        transform: translate(-55%, -5%) scale(1);
+    }
+}
+
+@keyframes auraBlob3 {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(-30%, 10%) scale(0.9);
+    }
+
+    66% {
+        transform: translate(-70%, -10%) scale(1.1);
+    }
+
+    100% {
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+@keyframes auraBlob4 {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(-60%, -12%) scale(1.15);
+    }
+
+    100% {
+        transform: translate(-40%, 8%) scale(1);
+    }
+}
+
+@keyframes auraBlob5 {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(-55%, 15%) scale(0.95);
+    }
+
+    66% {
+        transform: translate(-45%, -8%) scale(1.1);
+    }
+
+    100% {
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+@keyframes auraBlob6 {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(-35%, -5%) scale(1.2);
+    }
+
+    100% {
+        transform: translate(-65%, 5%) scale(0.9);
+    }
+}
+
+@keyframes auraBlob7 {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translate(-50%, -5%) scale(1.1);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(-50%, 0) scale(1);
+        opacity: 0.5;
+    }
+}
