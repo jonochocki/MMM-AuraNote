@@ -37,6 +37,63 @@ Module.register("MMM-AuraNote", {
     start: function () {
         Log.info("Starting module: " + this.name);
         this.isDarkMode = this.config.defaultDarkMode;
+        
+        // Expose global console API for testing
+        window.AuraNote = {
+            test: (content, options = {}) => {
+                const payload = {
+                    content: content || "Test notification from console",
+                    isHTML: options.isHTML || false,
+                    timer: options.timer !== undefined ? options.timer : 5000,
+                    buttonLabel: options.buttonLabel || null,
+                    buttonUrl: options.buttonUrl || null,
+                    isCritical: options.isCritical || false
+                };
+                this.sendNotification("AURA_NOTE_SHOW", payload);
+                console.log("✅ AuraNote notification sent:", payload);
+            },
+            clear: () => {
+                this.sendNotification("AURA_NOTE_CLEAR");
+                console.log("✅ All AuraNote notifications cleared");
+            },
+            critical: (content) => {
+                window.AuraNote.test(content, { isCritical: true, timer: null });
+            },
+            timed: (content, seconds = 5) => {
+                window.AuraNote.test(content, { timer: seconds * 1000 });
+            },
+            help: () => {
+                console.log(`
+🎯 AuraNote Console API:
+
+Basic usage:
+  AuraNote.test()                           // Simple test notification
+  AuraNote.test("Hello World")              // Custom message
+  
+Advanced usage:
+  AuraNote.test("Message", {                // Full options
+    isHTML: false,                          // Set true for HTML content
+    timer: 5000,                            // Auto-dismiss in ms
+    buttonLabel: "Learn More",              // CTA button text
+    buttonUrl: "https://example.com",       // CTA button URL
+    isCritical: false                       // Critical alert styling
+  })
+
+Quick shortcuts:
+  AuraNote.critical("⚠️ Alert!")            // Critical alert (no timer)
+  AuraNote.timed("Message", 10)             // Auto-dismiss in 10 seconds
+  AuraNote.clear()                          // Clear all notifications
+
+Examples:
+  AuraNote.test("Simple notification")
+  AuraNote.critical("⚠️ Important Alert!")
+  AuraNote.timed("Disappears in 3 sec", 3)
+  AuraNote.test("<h3>Rich HTML</h3>", { isHTML: true })
+                `);
+            }
+        };
+        
+        console.log("🌟 AuraNote loaded! Type 'AuraNote.help()' for console API info");
     },
 
     // Define styles

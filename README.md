@@ -24,7 +24,7 @@ A beautiful MagicMirror² module for displaying alerts and notifications with Ap
 
 2. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/MMM-AuraNote.git
+   git clone https://github.com/jonochocki/MMM-AuraNote.git
    ```
 
 3. Add the module to your `config/config.js` file (see configuration below)
@@ -171,15 +171,41 @@ You can customize the appearance by editing `MMM-AuraNote.css`.
 
 ## Development
 
-To test the module during development, you can send notifications from the browser console:
+### Console API for Testing
+
+When MagicMirror is running, you can test notifications directly from your browser console:
 
 ```javascript
-// Send a test notification
-MM.getModules().filter(m => m.name === "MMM-AuraNote")[0]
-    .sendNotification("AURA_NOTE_SHOW", {
-        content: "Test notification",
-        timer: 5000
-    });
+// Show help for available commands
+AuraNote.help()
+
+// Simple test notification
+AuraNote.test()
+AuraNote.test("Hello World")
+
+// Critical alert (no auto-dismiss)
+AuraNote.critical("⚠️ Important Alert!")
+
+// Timed notification (auto-dismiss in seconds)
+AuraNote.timed("This will disappear in 10 seconds", 10)
+
+// Advanced options
+AuraNote.test("Custom notification", {
+    isHTML: false,
+    timer: 5000,
+    buttonLabel: "Learn More",
+    buttonUrl: "https://example.com",
+    isCritical: false
+})
+
+// Rich HTML content
+AuraNote.test(`
+    <h3 style="margin: 0 0 8px 0;">New Update</h3>
+    <p style="margin: 0; opacity: 0.8;">Version 2.0 available</p>
+`, { isHTML: true, timer: 10000 })
+
+// Clear all notifications
+AuraNote.clear()
 ```
 
 ## Performance Considerations
@@ -213,4 +239,4 @@ MIT Licensed. See LICENSE file for details.
 ## Support
 
 For issues, feature requests, or questions, please visit:
-https://github.com/yourusername/MMM-AuraNote/issues
+https://github.com/jonochocki/MMM-AuraNote/issues
