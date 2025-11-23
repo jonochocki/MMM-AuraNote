@@ -37,23 +37,22 @@ Module.register("MMM-AuraNote", {
     start: function () {
         Log.info("Starting module: " + this.name);
         this.isDarkMode = this.config.defaultDarkMode;
-        
+
         // Expose global console API for testing
         window.AuraNote = {
             test: (content, options = {}) => {
-                const payload = {
-                    content: content || "Test notification from console",
-                    isHTML: options.isHTML || false,
-                    timer: options.timer !== undefined ? options.timer : 5000,
-                    buttonLabel: options.buttonLabel || null,
-                    buttonUrl: options.buttonUrl || null,
-                    isCritical: options.isCritical || false
-                };
-                this.sendNotification("AURA_NOTE_SHOW", payload);
-                console.log("✅ AuraNote notification sent:", payload);
+                this.createBubble(
+                    content || "Test notification from console",
+                    options.isHTML || false,
+                    options.timer !== undefined ? options.timer : 5000,
+                    options.buttonLabel || null,
+                    options.buttonUrl || null,
+                    options.isCritical || false
+                );
+                console.log("✅ AuraNote notification created:", content);
             },
             clear: () => {
-                this.sendNotification("AURA_NOTE_CLEAR");
+                this.clearAllBubbles();
                 console.log("✅ All AuraNote notifications cleared");
             },
             critical: (content) => {
@@ -92,7 +91,7 @@ Examples:
                 `);
             }
         };
-        
+
         console.log("🌟 AuraNote loaded! Type 'AuraNote.help()' for console API info");
     },
 
