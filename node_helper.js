@@ -14,6 +14,7 @@ module.exports = NodeHelper.create({
 
     socketNotificationReceived: function (notification, payload) {
         if (notification === "AURA_NOTE_BROADCAST") {
+            console.log("MMM-AuraNote NodeHelper: Broadcasting notification to all clients");
             // Broadcast notification to all connected clients
             this.sendSocketNotification("AURA_NOTE_RECEIVE", payload);
         }

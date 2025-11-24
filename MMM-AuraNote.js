@@ -54,7 +54,8 @@ Module.register("MMM-AuraNote", {
                     options.timer !== undefined ? options.timer : 5000,
                     options.buttonLabel || null,
                     options.buttonUrl || null,
-                    options.isCritical || false
+                    options.isCritical || false,
+                    true // shouldBroadcast
                 );
                 console.log("✅ AuraNote notification created:", content);
             },
@@ -104,49 +105,9 @@ Examples:
 
     interceptNotifications: function () {
         Log.info("MMM-AuraNote: Intercepting default notifications");
-
         // Add class to body to hide default notifications
         document.body.classList.add("MMM-AuraNote-intercept");
-
-        // Store original functions
-        const originalShowNotification = typeof MM !== 'undefined' && MM.showNotification ? MM.showNotification.bind(MM) : null;
-        const originalShowAlert = typeof MM !== 'undefined' && MM.showAlert ? MM.showAlert.bind(MM) : null;
-
-        // Override MM.showNotification
-        if (typeof MM !== 'undefined') {
-            MM.showNotification = (title, message, options = {}) => {
-                // Convert to AuraNote bubble
-                const content = title && message ? `<strong>${title}</strong><br>${message}` : (title || message);
-                this.createBubble(
-                    content,
-                    true, // isHTML
-                    options.timer || 5000,
-                    null, // buttonLabel
-                    null, // buttonUrl
-                    false, // not critical
-                    true  // shouldBroadcast
-                );
-                Log.info("MMM-AuraNote: Intercepted showNotification");
-            };
-
-            // Override MM.showAlert
-            MM.showAlert = (title, message, options = {}) => {
-                // Convert to critical AuraNote bubble
-                const content = title && message ? `<strong>${title}</strong><br>${message}` : (title || message);
-                this.createBubble(
-                    content,
-                    true, // isHTML
-                    null, // no timer for alerts
-                    null, // buttonLabel
-                    null, // buttonUrl
-                    true, // critical
-                    true  // shouldBroadcast
-                );
-                Log.info("MMM-AuraNote: Intercepted showAlert");
-            };
-        }
     },
-
 
     // Define styles
     getStyles: function () {
@@ -200,7 +161,8 @@ Examples:
                 payload.timer !== undefined ? payload.timer : this.config.defaultTimer,
                 payload.buttonLabel || null,
                 payload.buttonUrl || null,
-                payload.isCritical || false
+                payload.isCritical || false,
+                true // shouldBroadcast
             );
         }
 
@@ -213,6 +175,7 @@ Examples:
     socketNotificationReceived: function (notification, payload) {
         // Handle broadcasts from node helper (for cross-instance sync)
         if (notification === "AURA_NOTE_RECEIVE") {
+            Log.info("MMM-AuraNote: Received broadcast notification");
             // Create bubble from broadcast (don't re-broadcast to prevent infinite loop)
             this.createBubble(
                 payload.content,
