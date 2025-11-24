@@ -11,8 +11,13 @@
 }
 
 /* Hide default MagicMirror notifications when intercepting */
-body.MMM-AuraNote-intercept .ns-box {
+body.MMM-AuraNote-intercept .ns-box,
+body.MMM-AuraNote-intercept .ns-alert,
+body.MMM-AuraNote-intercept .alert {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 

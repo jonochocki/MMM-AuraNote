@@ -18,5 +18,11 @@ module.exports = NodeHelper.create({
             // Broadcast notification to all connected clients
             this.sendSocketNotification("AURA_NOTE_RECEIVE", payload);
         }
+        if (notification === "AURA_NOTE_BROADCAST_DISMISS") {
+            this.sendSocketNotification("AURA_NOTE_RECEIVE_DISMISS", payload);
+        }
+        if (notification === "AURA_NOTE_BROADCAST_CLEAR") {
+            this.sendSocketNotification("AURA_NOTE_RECEIVE_CLEAR", payload);
+        }
     }
 });

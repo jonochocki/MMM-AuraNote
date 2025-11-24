@@ -41,6 +41,10 @@ Module.register("MMM-AuraNote", {
         Log.info("MMM-AuraNote Config:", this.config);
         this.isDarkMode = this.config.defaultDarkMode;
 
+        // Generate unique ID for this instance to prevent self-broadcasting loops
+        this.instanceId = "aura-" + Math.random().toString(36).substr(2, 9);
+        Log.info("MMM-AuraNote Instance ID:", this.instanceId);
+
         // Intercept default MagicMirror notifications if enabled
         if (this.config.interceptNotifications) {
             Log.info("MMM-AuraNote: Interception ENABLED");
@@ -172,7 +176,7 @@ Examples:
                 this.createBubble(
                     title + message,
                     true, // isHTML
-                    null, // no timer for alerts
+                    payload.timer, // Use payload timer (was null)
                     null, // buttonLabel
                     null, // buttonUrl
                     true, // critical
@@ -221,7 +225,12 @@ Examples:
     socketNotificationReceived: function (notification, payload) {
         // Handle broadcasts from node helper (for cross-instance sync)
         if (notification === "AURA_NOTE_RECEIVE") {
-            Log.info("MMM-AuraNote: Received broadcast notification");
+            // Ignore our own broadcasts
+            if (payload.senderId === this.instanceId) {
+                return;
+            }
+
+            Log.info("MMM-AuraNote: Received broadcast notification from " + payload.senderId);
             // Create bubble from broadcast (don't re-broadcast to prevent infinite loop)
             this.createBubble(
                 payload.content,
@@ -230,28 +239,50 @@ Examples:
                 payload.buttonLabel,
                 payload.buttonUrl,
                 payload.isCritical,
-                false // don't broadcast again
+                false, // don't broadcast again
+                payload.id // Use synced ID
             );
+        }
+
+        if (notification === "AURA_NOTE_RECEIVE_CLEAR") {
+            if (payload.senderId === this.instanceId) return;
+            Log.info("MMM-AuraNote: Received broadcast CLEAR from " + payload.senderId);
+            this.clearAllBubbles(false); // Clear locally without broadcasting
+        }
+
+        if (notification === "AURA_NOTE_RECEIVE_DISMISS") {
+            if (payload.senderId === this.instanceId) return;
+            Log.info("MMM-AuraNote: Received broadcast DISMISS for " + payload.id);
+            // Find bubble with this ID
+            const bubble = this.bubbles.find(b => b.id === payload.id);
+            if (bubble) {
+                this.dismissBubble(bubble, false); // Dismiss locally without broadcasting
+            }
         }
     },
 
 
-    createBubble: function (content, isHTML, timer, buttonLabel, buttonUrl, isCritical, shouldBroadcast = false) {
+    createBubble: function (content, isHTML, timer, buttonLabel, buttonUrl, isCritical, shouldBroadcast = false, id = null) {
         if (!this.messageContainer) {
             Log.error("Message container not ready");
             return;
         }
 
+        // Generate ID if not provided
+        const bubbleId = id || (Date.now() + Math.random());
+
         // Broadcast to other instances if sync is enabled and shouldBroadcast is true
         if (this.config.syncAcrossInstances && shouldBroadcast) {
             Log.info("MMM-AuraNote: Broadcasting bubble to other instances");
             this.sendSocketNotification("AURA_NOTE_BROADCAST", {
+                id: bubbleId, // Sync the ID
                 content: content,
                 isHTML: isHTML,
                 timer: timer,
                 buttonLabel: buttonLabel,
                 buttonUrl: buttonUrl,
-                isCritical: isCritical
+                isCritical: isCritical,
+                senderId: this.instanceId
             });
         } else if (shouldBroadcast && !this.config.syncAcrossInstances) {
             Log.info("MMM-AuraNote: Skipping broadcast (syncAcrossInstances is disabled)");
@@ -293,7 +324,7 @@ Examples:
         const initialY = (Math.random() - 0.5) * 50;
 
         const bubble = {
-            id: Date.now() + Math.random(),
+            id: bubbleId,
             element: element,
             x: initialX,
             y: initialY,
@@ -344,10 +375,18 @@ Examples:
         this.spikeTemperature();
     },
 
-    dismissBubble: function (bubbleToRemove) {
+    dismissBubble: function (bubbleToRemove, shouldBroadcast = true) {
         const index = this.bubbles.findIndex(b => b.id === bubbleToRemove.id);
         if (index > -1) {
             const bubble = this.bubbles[index];
+
+            // Broadcast dismissal
+            if (this.config.syncAcrossInstances && shouldBroadcast) {
+                this.sendSocketNotification("AURA_NOTE_BROADCAST_DISMISS", {
+                    id: bubble.id,
+                    senderId: this.instanceId
+                });
+            }
 
             if (bubble.resizeObserver) {
                 bubble.resizeObserver.disconnect();
@@ -371,10 +410,17 @@ Examples:
         }
     },
 
-    clearAllBubbles: function () {
+    clearAllBubbles: function (shouldBroadcast = true) {
+        // Broadcast clear all
+        if (this.config.syncAcrossInstances && shouldBroadcast) {
+            this.sendSocketNotification("AURA_NOTE_BROADCAST_CLEAR", {
+                senderId: this.instanceId
+            });
+        }
+
         // Dismiss all bubbles
         const bubblesToRemove = [...this.bubbles];
-        bubblesToRemove.forEach(bubble => this.dismissBubble(bubble));
+        bubblesToRemove.forEach(bubble => this.dismissBubble(bubble, false)); // Don't broadcast individual dismissals when clearing all
     },
 
     spikeTemperature: function () {
