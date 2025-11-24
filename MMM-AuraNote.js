@@ -12,6 +12,8 @@ Module.register("MMM-AuraNote", {
         defaultDarkMode: true,        // Start in dark mode
         allowManualDismiss: true,     // Allow clicking bubbles to dismiss
         defaultTimer: null,           // Default auto-dismiss timer (ms), null = no timer
+        interceptNotifications: false, // Intercept default MM notifications
+        syncAcrossInstances: false,   // Sync notifications across all clients
         physicsConfig: {
             attractionStrength: 0.0005,
             repulsionStrength: 4000,
@@ -37,6 +39,11 @@ Module.register("MMM-AuraNote", {
     start: function () {
         Log.info("Starting module: " + this.name);
         this.isDarkMode = this.config.defaultDarkMode;
+
+        // Intercept default MagicMirror notifications if enabled
+        if (this.config.interceptNotifications) {
+            this.interceptNotifications();
+        }
 
         // Expose global console API for testing
         window.AuraNote = {
@@ -94,6 +101,52 @@ Examples:
 
         console.log("🌟 AuraNote loaded! Type 'AuraNote.help()' for console API info");
     },
+
+    interceptNotifications: function () {
+        Log.info("MMM-AuraNote: Intercepting default notifications");
+
+        // Add class to body to hide default notifications
+        document.body.classList.add("MMM-AuraNote-intercept");
+
+        // Store original functions
+        const originalShowNotification = typeof MM !== 'undefined' && MM.showNotification ? MM.showNotification.bind(MM) : null;
+        const originalShowAlert = typeof MM !== 'undefined' && MM.showAlert ? MM.showAlert.bind(MM) : null;
+
+        // Override MM.showNotification
+        if (typeof MM !== 'undefined') {
+            MM.showNotification = (title, message, options = {}) => {
+                // Convert to AuraNote bubble
+                const content = title && message ? `<strong>${title}</strong><br>${message}` : (title || message);
+                this.createBubble(
+                    content,
+                    true, // isHTML
+                    options.timer || 5000,
+                    null, // buttonLabel
+                    null, // buttonUrl
+                    false, // not critical
+                    true  // shouldBroadcast
+                );
+                Log.info("MMM-AuraNote: Intercepted showNotification");
+            };
+
+            // Override MM.showAlert
+            MM.showAlert = (title, message, options = {}) => {
+                // Convert to critical AuraNote bubble
+                const content = title && message ? `<strong>${title}</strong><br>${message}` : (title || message);
+                this.createBubble(
+                    content,
+                    true, // isHTML
+                    null, // no timer for alerts
+                    null, // buttonLabel
+                    null, // buttonUrl
+                    true, // critical
+                    true  // shouldBroadcast
+                );
+                Log.info("MMM-AuraNote: Intercepted showAlert");
+            };
+        }
+    },
+
 
     // Define styles
     getStyles: function () {
@@ -157,10 +210,39 @@ Examples:
         }
     },
 
-    createBubble: function (content, isHTML, timer, buttonLabel, buttonUrl, isCritical) {
+    socketNotificationReceived: function (notification, payload) {
+        // Handle broadcasts from node helper (for cross-instance sync)
+        if (notification === "AURA_NOTE_RECEIVE") {
+            // Create bubble from broadcast (don't re-broadcast to prevent infinite loop)
+            this.createBubble(
+                payload.content,
+                payload.isHTML,
+                payload.timer,
+                payload.buttonLabel,
+                payload.buttonUrl,
+                payload.isCritical,
+                false // don't broadcast again
+            );
+        }
+    },
+
+
+    createBubble: function (content, isHTML, timer, buttonLabel, buttonUrl, isCritical, shouldBroadcast = false) {
         if (!this.messageContainer) {
             Log.error("Message container not ready");
             return;
+        }
+
+        // Broadcast to other instances if sync is enabled and shouldBroadcast is true
+        if (this.config.syncAcrossInstances && shouldBroadcast) {
+            this.sendSocketNotification("AURA_NOTE_BROADCAST", {
+                content: content,
+                isHTML: isHTML,
+                timer: timer,
+                buttonLabel: buttonLabel,
+                buttonUrl: buttonUrl,
+                isCritical: isCritical
+            });
         }
 
         const element = document.createElement('div');

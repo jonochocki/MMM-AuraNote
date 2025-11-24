@@ -13,9 +13,12 @@
             config: {
         showBackground: true,
             defaultDarkMode: true,
-                allowManualDismiss: true
+                allowManualDismiss: true,
+                // interceptNotifications: false,  // Uncomment to replace default MM notifications
+                // syncAcrossInstances: false      // Uncomment to sync across all clients
     }
 },
+
 
 // Alternative Configuration (bottom center)
 // {

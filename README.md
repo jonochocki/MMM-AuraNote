@@ -38,10 +38,12 @@ Add the following to your `config/config.js`:
     module: "MMM-AuraNote",
     position: "fullscreen_below", // Recommended: fullscreen_below or bottom_center
     config: {
-        showBackground: true,        // Show animated glow background
-        defaultDarkMode: true,        // Start in dark mode
-        allowManualDismiss: true,     // Allow clicking bubbles to dismiss
-        defaultTimer: null,           // Default auto-dismiss timer (ms), null = no timer
+        showBackground: true,          // Show animated glow background
+        defaultDarkMode: true,          // Start in dark mode
+        allowManualDismiss: true,       // Allow clicking bubbles to dismiss
+        defaultTimer: null,             // Default auto-dismiss timer (ms), null = no timer
+        interceptNotifications: false,  // Replace default MM notifications with AuraNote
+        syncAcrossInstances: false,     // Sync notifications across all connected clients
     }
 }
 ```
@@ -54,7 +56,10 @@ Add the following to your `config/config.js`:
 | `defaultDarkMode` | Boolean | `true` | Use dark mode styling for bubbles |
 | `allowManualDismiss` | Boolean | `true` | Allow users to click bubbles to dismiss them |
 | `defaultTimer` | Number/null | `null` | Default auto-dismiss timer in milliseconds (null = no timer) |
+| `interceptNotifications` | Boolean | `false` | Replace default MagicMirror notifications with AuraNote bubbles |
+| `syncAcrossInstances` | Boolean | `false` | Synchronize notifications across all connected MagicMirror clients |
 | `physicsConfig` | Object | See below | Advanced physics engine configuration |
+
 
 ### Advanced Physics Configuration
 
@@ -169,7 +174,55 @@ The module uses Apple system colors for the glow animation:
 
 You can customize the appearance by editing `MMM-AuraNote.css`.
 
+## Intercepting Default Notifications
+
+MMM-AuraNote can replace the default MagicMirror notification system with AuraNote bubbles.
+
+### How It Works
+
+When `interceptNotifications: true`, the module will:
+- Override `MM.showNotification()` - converts to standard AuraNote bubbles (5 second timer)
+- Override `MM.showAlert()` - converts to critical AuraNote bubbles (no timer)
+- Hide the default `ns-box` notification UI
+
+### Example Configuration
+
+```javascript
+{
+    module: "MMM-AuraNote",
+    position: "fullscreen_below",
+    config: {
+        interceptNotifications: true,  // Enable interception
+        syncAcrossInstances: true,     // Sync across all clients
+        showBackground: true,
+        defaultDarkMode: true
+    }
+}
+```
+
+### Testing Interception
+
+With interception enabled, try in the browser console:
+
+```javascript
+// This will now show as an AuraNote bubble instead of the default notification
+MM.showNotification("Hello", "This is a test notification");
+
+// This will show as a critical AuraNote bubble
+MM.showAlert("Warning", "Important alert!");
+```
+
+### Cross-Instance Sync
+
+When `syncAcrossInstances: true`, notifications will appear on **all** connected MagicMirror clients:
+- Open MagicMirror on multiple devices or browsers
+- Create a notification on one instance
+- It automatically appears on all other instances
+
+> **Note:** Cross-instance sync works for both intercepted notifications and AuraNote API calls (`AuraNote.test()`, etc.)
+
 ## Development
+
 
 ### Console API for Testing
 

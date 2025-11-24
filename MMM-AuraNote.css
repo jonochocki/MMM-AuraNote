@@ -10,6 +10,12 @@
     z-index: 0;
 }
 
+/* Hide default MagicMirror notifications when intercepting */
+body.MMM-AuraNote-intercept .ns-box {
+    display: none !important;
+}
+
+
 /* CSS Variables */
 .MMM-AuraNote {
     --glow-height: 50vh;
