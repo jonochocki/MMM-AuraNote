@@ -38,11 +38,15 @@ Module.register("MMM-AuraNote", {
 
     start: function () {
         Log.info("Starting module: " + this.name);
+        Log.info("MMM-AuraNote Config:", this.config);
         this.isDarkMode = this.config.defaultDarkMode;
 
         // Intercept default MagicMirror notifications if enabled
         if (this.config.interceptNotifications) {
+            Log.info("MMM-AuraNote: Interception ENABLED");
             this.interceptNotifications();
+        } else {
+            Log.info("MMM-AuraNote: Interception DISABLED");
         }
 
         // Expose global console API for testing
@@ -147,10 +151,52 @@ Examples:
     },
 
     notificationReceived: function (notification, payload, sender) {
+        // Log ALL notifications for debugging
+        if (notification !== "CLOCK_SECOND" && notification !== "NEWS_FEED_NEXT_ITEM") {
+            Log.info(`MMM-AuraNote received: ${notification}`, payload);
+        }
+
         if (notification === "DOM_OBJECTS_CREATED") {
             this.messageContainer = document.getElementById("aura-message-container");
             // Start physics loop
             this.startPhysicsLoop();
+        }
+
+        // Intercept System Notifications
+        if (this.config.interceptNotifications) {
+            if (notification === "SHOW_ALERT") {
+                Log.info("MMM-AuraNote: Intercepting SHOW_ALERT");
+                // Handle Alert (Critical)
+                const title = payload.title ? `<strong>${payload.title}</strong><br>` : "";
+                const message = payload.message || "";
+                this.createBubble(
+                    title + message,
+                    true, // isHTML
+                    null, // no timer for alerts
+                    null, // buttonLabel
+                    null, // buttonUrl
+                    true, // critical
+                    true  // shouldBroadcast
+                );
+                return;
+            }
+
+            // Handle Standard Notifications (some modules use SHOW_NOTIFICATION)
+            if (notification === "SHOW_NOTIFICATION") {
+                Log.info("MMM-AuraNote: Intercepting SHOW_NOTIFICATION");
+                const title = payload.title ? `<strong>${payload.title}</strong><br>` : "";
+                const message = payload.message || "";
+                this.createBubble(
+                    title + message,
+                    true, // isHTML
+                    payload.timer || 5000,
+                    null, // buttonLabel
+                    null, // buttonUrl
+                    false, // not critical
+                    true  // shouldBroadcast
+                );
+                return;
+            }
         }
 
         // Listen for AURA_NOTE_SHOW notifications from other modules
@@ -198,6 +244,7 @@ Examples:
 
         // Broadcast to other instances if sync is enabled and shouldBroadcast is true
         if (this.config.syncAcrossInstances && shouldBroadcast) {
+            Log.info("MMM-AuraNote: Broadcasting bubble to other instances");
             this.sendSocketNotification("AURA_NOTE_BROADCAST", {
                 content: content,
                 isHTML: isHTML,
@@ -206,6 +253,8 @@ Examples:
                 buttonUrl: buttonUrl,
                 isCritical: isCritical
             });
+        } else if (shouldBroadcast && !this.config.syncAcrossInstances) {
+            Log.info("MMM-AuraNote: Skipping broadcast (syncAcrossInstances is disabled)");
         }
 
         const element = document.createElement('div');
