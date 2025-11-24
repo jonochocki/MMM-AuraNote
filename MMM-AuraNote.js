@@ -25,13 +25,18 @@ Module.register("MMM-AuraNote", {
             maxOverlap: 0.05,
             hardCollisionForce: 1.0,
             boundaryPadding: 20
-        }
+        },
+        highPerformance: false // Disable expensive effects like backdrop-filter
     },
 
     // Module state
     bubbles: [],
     systemTemperature: 0,
+    bubbles: [],
+    systemTemperature: 0,
     animationFrameId: null,
+    windowWidth: window.innerWidth,
+    windowHeight: window.innerHeight,
 
     // Required version
     requiresVersion: "2.1.0",
@@ -151,6 +156,11 @@ Examples:
         messageContainer.id = "aura-message-container";
         wrapper.appendChild(messageContainer);
 
+        if (this.config.highPerformance) {
+            wrapper.classList.add("performance-mode");
+            Log.info("MMM-AuraNote: High Performance Mode ENABLED");
+        }
+
         return wrapper;
     },
 
@@ -163,7 +173,14 @@ Examples:
         if (notification === "DOM_OBJECTS_CREATED") {
             this.messageContainer = document.getElementById("aura-message-container");
             // Start physics loop
+            // Start physics loop
             this.startPhysicsLoop();
+
+            // Cache window dimensions on resize
+            window.addEventListener('resize', () => {
+                this.windowWidth = window.innerWidth;
+                this.windowHeight = window.innerHeight;
+            });
         }
 
         // Intercept System Notifications
@@ -453,6 +470,7 @@ Examples:
         bubble.timerRect.setAttribute('ry', borderRadius);
 
         const perimeter = 2 * (rectWidth + rectHeight) - 8 * borderRadius + 2 * Math.PI * borderRadius;
+        bubble.perimeter = perimeter; // Cache perimeter for animation loop
         bubble.timerRect.style.strokeDasharray = perimeter;
 
         if (bubble.timerStartTime) {
@@ -479,41 +497,14 @@ Examples:
         bubble.timerStartTime = Date.now();
 
         this.updateTimerSvgSize(bubble);
-        this.animateTimer(bubble, duration);
+        // Animation is now handled in the main physics loop
 
         bubble.timerTimeout = setTimeout(() => {
             this.dismissBubble(bubble);
         }, duration);
     },
 
-    animateTimer: function (bubble, duration) {
-        const animate = () => {
-            if (!bubble.timerRect || !bubble.element.parentElement) {
-                return;
-            }
-
-            const elapsed = Date.now() - bubble.timerStartTime;
-            const progress = Math.min(elapsed / duration, 1);
-
-            const width = bubble.element.offsetWidth;
-            const height = bubble.element.offsetHeight;
-            const padding = 6;
-            const borderRadius = 24 + padding;
-
-            const rectWidth = width + (padding * 2);
-            const rectHeight = height + (padding * 2);
-
-            const perimeter = 2 * (rectWidth + rectHeight) - 8 * borderRadius + 2 * Math.PI * borderRadius;
-            const offset = perimeter * (1 - progress);
-            bubble.timerRect.style.strokeDashoffset = offset;
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-
-        requestAnimationFrame(animate);
-    },
+    // animateTimer removed - logic moved to updatePhysics
 
     startPhysicsLoop: function () {
         const updatePhysics = () => {
@@ -521,12 +512,39 @@ Examples:
             this.systemTemperature *= cfg.tempDecay;
             const currentSpeedFactor = cfg.baseSpeed + (cfg.activeSpeed - cfg.baseSpeed) * this.systemTemperature;
 
-            // Container is at bottom: 20%, left: 50%
-            const containerX = window.innerWidth / 2;
-            const containerY = window.innerHeight * 0.8;
+            // Use cached dimensions
+            const containerX = this.windowWidth / 2;
+            const containerY = this.windowHeight * 0.8;
+
+            const now = Date.now();
 
             for (let i = 0; i < this.bubbles.length; i++) {
                 const b1 = this.bubbles[i];
+
+                // --- TIMER ANIMATION UPDATE ---
+                if (b1.timerRect && b1.timerStartTime) {
+                    const elapsed = now - b1.timerStartTime;
+                    const progress = Math.min(elapsed / b1.timerDuration, 1);
+
+                    // Only update DOM if changed significantly or finished
+                    if (progress <= 1) {
+                        // We need to recalculate perimeter if size changed, but for now assume updateTimerSvgSize handles resizes.
+                        // To be safe and performant, we use the values from the last resize/init.
+                        // However, we need the perimeter. Let's store it on the bubble during resize/init.
+                        if (!b1.perimeter) {
+                            // Fallback calculation if not yet set
+                            const padding = 6;
+                            const borderRadius = 24 + padding;
+                            const rectWidth = b1.width + (padding * 2);
+                            const rectHeight = b1.height + (padding * 2);
+                            b1.perimeter = 2 * (rectWidth + rectHeight) - 8 * borderRadius + 2 * Math.PI * borderRadius;
+                        }
+
+                        const offset = b1.perimeter * (1 - progress);
+                        b1.timerRect.style.strokeDashoffset = offset;
+                    }
+                }
+                // ------------------------------
 
                 // 1. Attraction to Center
                 b1.vx -= b1.x * cfg.attractionStrength * currentSpeedFactor;
@@ -586,8 +604,8 @@ Examples:
                     b1.vx *= -0.5;
                 }
                 // Right Boundary
-                if (screenX + halfW > window.innerWidth - cfg.boundaryPadding) {
-                    b1.x = window.innerWidth - cfg.boundaryPadding - containerX - halfW;
+                if (screenX + halfW > this.windowWidth - cfg.boundaryPadding) {
+                    b1.x = this.windowWidth - cfg.boundaryPadding - containerX - halfW;
                     b1.vx *= -0.5;
                 }
                 // Top Boundary
@@ -596,8 +614,8 @@ Examples:
                     b1.vy *= -0.5;
                 }
                 // Bottom Boundary
-                if (screenY + halfH > window.innerHeight - cfg.boundaryPadding) {
-                    b1.y = window.innerHeight - cfg.boundaryPadding - containerY - halfH;
+                if (screenY + halfH > this.windowHeight - cfg.boundaryPadding) {
+                    b1.y = this.windowHeight - cfg.boundaryPadding - containerY - halfH;
                     b1.vy *= -0.5;
                 }
 
@@ -608,7 +626,8 @@ Examples:
                 const isHiding = b1.element.classList.contains('hide');
                 const scale = isHiding ? 0.8 : (b1.element.classList.contains('show') ? 1 : 0.5);
 
-                b1.element.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
+                // Use translate3d for GPU acceleration
+                b1.element.style.transform = `translate3d(${left}px, ${top}px, 0) scale(${scale})`;
             }
 
             this.animationFrameId = requestAnimationFrame(updatePhysics);
